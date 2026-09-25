@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "borealis-wallpaper"
+version = "0.1.0"
+description = "Atmospheric, astronomical, and space-weather dynamic wallpaper engine for Linux/Wayland"
+readme = "README.md"
+authors = [{ name = "SpanishSyntax" }]
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["wallpaper", "wayland", "hyprland", "astronomy", "weather", "space-weather", "awww", "swww"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Desktop Environment",
+]
+dependencies = []
+
+[project.scripts]
+borealis = "borealis.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["borealis*"]
