@@ -16,13 +16,34 @@ class AwwwBackend(BaseBackend):
         self.transition_step = transition_step
 
     def ensure_daemon(self) -> None:
-        """Start awww-daemon in background if not already active."""
-        if shutil.which("awww-daemon") is None:
-            return
+        """Start awww-daemon in background if not already active and responding."""
+        if shutil.which("awww") is not None:
+            # Check if awww-daemon is actively responding via IPC
+            try:
+                check = subprocess.run(
+                    ["awww", "query"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2,
+                )
+                if check.returncode == 0:
+                    return
+            except Exception:
+                pass
 
-        # Check if awww-daemon process is running
-        check = subprocess.run(["pgrep", "-x", "awww-daemon"], stdout=subprocess.DEVNULL)
-        if check.returncode != 0:
+        # Check if process is running (handling wrapped Nix binaries e.g. .awww-daemon-wr)
+        try:
+            pgrep_check = subprocess.run(
+                ["pgrep", "-f", "awww-daemon"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if pgrep_check.returncode == 0:
+                return
+        except Exception:
+            pass
+
+        if shutil.which("awww-daemon") is not None:
             try:
                 subprocess.Popen(
                     ["awww-daemon"],
