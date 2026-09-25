@@ -9,6 +9,7 @@ from pathlib import Path
 from borealis import __app_name__, __version__
 from borealis.config import load_config
 from borealis.engine import BorealisEngine
+from borealis.ui import ui
 
 
 def setup_logging(verbose: bool) -> None:
@@ -23,12 +24,12 @@ def setup_logging(verbose: bool) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog=__app_name__,
-        description="Borealis - Atmospheric & Astronomical Dynamic Wallpaper Engine",
+        description=f"{ui.badge()} {ui.bold('Atmospheric & Astronomical Dynamic Wallpaper Engine')}",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version=f"{__app_name__} {__version__}",
+        version=f"{ui.badge()} {ui.bold(__version__)}",
     )
     parser.add_argument(
         "-c",
@@ -98,24 +99,38 @@ def main() -> int:
 
     elif command == "dry-run":
         res = engine.tick(dry_run=True)
+        ui.info(f"Dry-run evaluation complete (Mood: {ui.bold(str(res.get('mood')))}, Rule: {ui.cyan(str(res.get('rule')))})", symbol="🔍")
         print(json.dumps(res, indent=2))
         return 0
 
     elif command == "list-tags":
         tags = engine.library.get_tag_counts()
-        print(f"Total wallpapers indexed: {len(engine.library.items)}")
-        print(f"Directory: {config.wallpaper_dir}")
-        print("-" * 40)
+        ui.header("BOREALIS WALLPAPER LIBRARY TAGS", width=72)
+        ui.info(f"Total wallpapers indexed: {ui.bold(str(len(engine.library.items)))}", symbol="📊")
+        dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
+        ui.info(f"Repositories: {ui.cyan(dirs_str)}", symbol="📁")
+        print(ui.dim("-" * 72))
+        tag_hdr = ui.bold(f"{'TAG':<25}")
+        count_hdr = ui.bold("COUNT")
+        print(f"  {tag_hdr}   {count_hdr}")
+        print(f"  {ui.dim('-' * 25)}   {ui.dim('-' * 10)}")
         for tag, count in tags.items():
-            print(f"  {tag:<25} : {count} wallpapers")
+            t_col = ui.cyan(f"{tag:<25}")
+            print(f"  {t_col} : {ui.bold(str(count))} wallpapers")
+        print(ui.blue("=" * 72) + "\n")
         return 0
 
     elif command == "once":
         res = engine.tick(dry_run=False)
-        print(f"Applied {res.get('wallpaper')} (Mood: {res.get('mood')})")
-        return 0 if res.get("applied") else 1
+        if res.get("applied"):
+            ui.success(f"Applied {ui.bold(str(res.get('wallpaper')))} (Mood: {ui.cyan(str(res.get('mood')))})")
+            return 0
+        else:
+            ui.error(f"Failed to apply wallpaper: {res.get('wallpaper')}")
+            return 1
 
     elif command == "run":
+        ui.action(f"Starting Borealis wallpaper daemon using backend '{ui.bold(config.backend_name)}'...", symbol="🌌")
         engine.run_daemon()
         return 0
 

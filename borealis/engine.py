@@ -17,6 +17,7 @@ from borealis.sensors.solar import SolarSensor
 from borealis.sensors.space import SpaceWeatherSensor
 from borealis.sensors.system import SystemSensor
 from borealis.sensors.weather import WeatherSensor
+from borealis.ui import ui
 
 logger = logging.getLogger("borealis")
 
@@ -113,29 +114,46 @@ class BorealisEngine:
 
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        print("=" * 72)
-        print(f" BOREALIS TELEMETRY DASHBOARD | {now}")
-        print("=" * 72)
-        print(f"  {'Geographic Origin':<25} : {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})")
-        print(f"  {'Solar Elevation':<25} : {sol.get('elevation_deg')}° ({sol.get('phase', 'unknown')})")
-        print(f"  {'Atmospheric Lumens':<25} : {sol.get('estimated_lumens', 0)} lm (sin_elev: {round(sol.get('sin_elevation', 0), 3)})")
-        print("-" * 72)
-        print(f"  {'Thermal State':<25} : {wth.get('temperature', 0)}°C ({wth.get('description', 'N/A')})")
-        print(f"  {'Moisture Content':<25} : {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})")
-        print(f"  {'Cloud Canopy':<25} : {wth.get('clouds', 0)}%")
-        print(f"  {'Geomagnetic Scale':<25} : Kp-Index {spc.get('kp_index', 0)} ({spc.get('activity', 'quiet')})")
-        print("-" * 72)
-        print(f"  {'Local Temporal State':<25} : {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({sys_ctx.get('season', '')})")
+        ui.header(f"BOREALIS TELEMETRY DASHBOARD | {now}", width=76)
+
+        geo_hdr = ui.bold(f"{'Geographic Origin':<25}")
+        solar_hdr = ui.bold(f"{'Solar Elevation':<25}")
+        lumen_hdr = ui.bold(f"{'Atmospheric Lumens':<25}")
+        print(f"  {geo_hdr} : {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})")
+        print(f"  {solar_hdr} : {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))})")
+        print(f"  {lumen_hdr} : {sol.get('estimated_lumens', 0)} lm (sin_elev: {round(sol.get('sin_elevation', 0), 3)})")
+        print(ui.dim("-" * 76))
+
+        therm_hdr = ui.bold(f"{'Thermal State':<25}")
+        moist_hdr = ui.bold(f"{'Moisture Content':<25}")
+        cloud_hdr = ui.bold(f"{'Cloud Canopy':<25}")
+        geo_scale_hdr = ui.bold(f"{'Geomagnetic Scale':<25}")
+        print(f"  {therm_hdr} : {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))})")
+        print(f"  {moist_hdr} : {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})")
+        print(f"  {cloud_hdr} : {wth.get('clouds', 0)}%")
+        print(f"  {geo_scale_hdr} : Kp-Index {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})")
+        print(ui.dim("-" * 76))
+
+        time_hdr = ui.bold(f"{'Local Temporal State':<25}")
+        print(f"  {time_hdr} : {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))})")
         if sys_ctx.get("battery_percent") is not None:
+            batt_hdr = ui.bold(f"{'Battery Telemetry':<25}")
             charging_str = "Charging" if sys_ctx.get("is_charging") else "Discharging"
-            print(f"  {'Battery Telemetry':<25} : {sys_ctx.get('battery_percent')}% ({charging_str})")
-        print("-" * 72)
+            print(f"  {batt_hdr} : {sys_ctx.get('battery_percent')}% ({charging_str})")
+        print(ui.dim("-" * 76))
+
+        mood_hdr = ui.cyan(f"{'ACTIVE MOOD VECTOR':<25}")
+        dec_hdr = ui.bold(f"{'Decision Origin':<25}")
+        lib_hdr = ui.bold(f"{'Wallpaper Library':<25}")
         rule_desc = f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
-        print(f"  \033[1;36m{'ACTIVE MOOD VECTOR':<25}\033[0m : \033[1;35m{mood}\033[0m (tags: {', '.join(tags)})")
-        print(f"  {'Decision Origin':<25} : {rule_desc}")
         dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
-        print(f"  {'Wallpaper Library':<25} : {len(self.library.items)} assets indexed from {dirs_str}")
-        print("=" * 72)
+        print(f"  {mood_hdr} : {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})")
+        print(f"  {dec_hdr} : {ui.cyan(rule_desc)}")
+        print(f"  {lib_hdr} : {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}")
+        if path:
+            sel_hdr = ui.bold(f"{'Selected Wallpaper':<25}")
+            print(f"  {sel_hdr} : {ui.green(str(path))}")
+        print(ui.blue("=" * 76) + "\n")
 
     def run_daemon(self) -> None:
         """Start the background daemon loop."""
