@@ -2,6 +2,7 @@
 
 import datetime
 import logging
+import random
 import signal
 import sys
 import time
@@ -102,6 +103,29 @@ class BorealisEngine:
                 logger.warning(f"Backend '{self.backend.name}' failed to apply wallpaper: {path}")
 
         return result
+
+    def set_wallpaper(self, target: str) -> Optional[Path]:
+        """Directly applies a wallpaper by image file path, indexed tag, or mood name."""
+        candidate_path = Path(target).expanduser().resolve()
+        if candidate_path.is_file():
+            success = self.backend.apply(candidate_path)
+            return candidate_path if success else None
+
+        # Search by tag or mood across indexed items
+        target_clean = target.lower()
+        matching = [item for item in self.library.items if item.matches({target_clean})]
+        if not matching:
+            return None
+
+        filtered = [item for item in matching if item.path not in self.library.history]
+        if not filtered:
+            filtered = matching
+
+        weights = [item.weight for item in filtered]
+        chosen = random.choices(filtered, weights=weights, k=1)[0]
+        self.library.history.append(chosen.path)
+        success = self.backend.apply(chosen.path)
+        return chosen.path if success else None
 
     def print_status_dashboard(self) -> None:
         """Print an informative, formatted telemetry dashboard to terminal."""

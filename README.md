@@ -44,8 +44,14 @@ Borealis is a telemetry-driven dynamic wallpaper daemon that continuously synchr
 Run Borealis directly using Nix:
 
 ```bash
-# View live telemetry dashboard and current selected mood
-nix run github:SpanishSyntax/Borealis -- status
+# View live telemetry dashboard and current selected mood (Default)
+nix run github:SpanishSyntax/Borealis
+
+# Immediately apply a wallpaper from a specific mood/tag
+nix run github:SpanishSyntax/Borealis -- set cosmic_void
+
+# Evaluate telemetry and apply appropriate wallpaper once
+nix run github:SpanishSyntax/Borealis -- once
 
 # Inspect indexed wallpapers and mood tags
 nix run github:SpanishSyntax/Borealis -- list-tags

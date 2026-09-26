@@ -21,16 +21,27 @@ def setup_logging(verbose: bool) -> None:
     )
 
 
+def handle_color_args():
+    for i, arg in enumerate(sys.argv[1:]):
+        if arg == "--no-color":
+            ui.set_color_mode("never")
+        elif arg.startswith("--color="):
+            ui.set_color_mode(arg.split("=", 1)[1])
+        elif arg == "--color" and i + 1 < len(sys.argv[1:]):
+            ui.set_color_mode(sys.argv[1:][i + 1])
+
+
 def print_help():
     """Prints beautiful colored usage instructions matching Folio & Flaker."""
     print(f"""{ui.badge()} {ui.bold("Atmospheric & Astronomical Dynamic Wallpaper Engine")}
 
 {ui.blue("Usage:")}
-  borealis [command] [options]
-  borealis [options]
+  borealis [status] [options]        Display live telemetry dashboard (default)
+  borealis <command> [options]
 
 {ui.blue("Commands:")}
   status       Display live telemetry dashboard (solar, weather, Kp-index, mood)
+  set <tag>    Immediately apply a wallpaper matching a tag, mood, or image file
   once         Evaluate telemetry, apply wallpaper once, and exit
   dry-run      Evaluate telemetry and preview routing without applying
   list-tags    List all indexed wallpaper tags and asset counts
@@ -41,13 +52,15 @@ def print_help():
   -d, --wallpaper-dir DIR    Path to wallpapers directory (can specify multiple)
   -b, --backend NAME         Override display backend (awww, swww, hyprpaper, command)
   -v, --verbose              Enable verbose debug logging
+  --color MODE               Color output mode: auto, always, never (default: auto)
+  --no-color                 Disable colored output
   -h, --help                 Show this help message and exit
-  --version                  Show version and exit
+  -V, --version              Show version and exit
 
 {ui.blue("Examples:")}
   borealis                   # Display real-time telemetry dashboard & active mood
-  borealis status            # Inspect atmospheric, solar, & space-weather state
-  borealis once              # Evaluate and apply wallpaper immediately
+  borealis set cosmic_void   # Immediately apply a wallpaper from the 'cosmic_void' tag
+  borealis once              # Evaluate telemetry and apply appropriate wallpaper
   borealis dry-run           # Inspect calculated telemetry JSON without setting wallpaper
   borealis list-tags         # View all wallpaper categories & indexed counts
   borealis run               # Launch continuous background daemon
@@ -55,6 +68,8 @@ def print_help():
 
 
 def main() -> int:
+    handle_color_args()
+
     if any(a in ("-h", "--help", "help") for a in sys.argv[1:]):
         print_help()
         return 0
@@ -102,6 +117,23 @@ def main() -> int:
         action="store_true",
         help="Enable verbose debug logging",
     )
+    parser.add_argument(
+        "--color",
+        choices=["auto", "always", "never"],
+        default="auto",
+        help="Color output mode (auto, always, never)",
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="store_true",
+        help="Show version and exit",
+    )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
     subparsers.add_parser("run", help="Start continuous background wallpaper daemon")
@@ -110,7 +142,14 @@ def main() -> int:
     subparsers.add_parser("dry-run", help="Evaluate telemetry and pick wallpaper without applying it")
     subparsers.add_parser("list-tags", help="List all indexed wallpaper tags and item counts")
 
+    set_parser = subparsers.add_parser("set", help="Immediately apply a wallpaper matching a tag, mood, or image file")
+    set_parser.add_argument("tag", help="Tag, mood name (e.g. cosmic_void, rain, aurora), or image path")
+
     args = parser.parse_args()
+    if args.version:
+        print(f"{ui.badge()} {ui.bold(__version__)}")
+        return 0
+
     setup_logging(args.verbose)
 
     # Load configuration (with explicit config file if provided)
@@ -131,6 +170,16 @@ def main() -> int:
     if command == "status":
         engine.print_status_dashboard()
         return 0
+
+    elif command == "set":
+        tag = args.tag
+        path = engine.set_wallpaper(tag)
+        if path:
+            ui.success(f"Applied wallpaper {ui.bold(path.name)} for tag '{ui.cyan(tag)}'")
+            return 0
+        else:
+            ui.error(f"No wallpapers found matching '{tag}'. Run 'borealis list-tags' to see available tags.")
+            return 1
 
     elif command == "dry-run":
         res = engine.tick(dry_run=True)
