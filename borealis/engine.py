@@ -160,19 +160,24 @@ class BorealisEngine:
         self._running = True
 
         def _handle_signal(signum, frame):
-            logger.info("Termination signal received. Shutting down Borealis daemon.")
+            ui.info("Termination signal received. Shutting down Borealis daemon.", symbol="🛑")
             self._running = False
 
         signal.signal(signal.SIGINT, _handle_signal)
         signal.signal(signal.SIGTERM, _handle_signal)
 
         dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
-        logger.info(f"Starting Borealis wallpaper daemon using backend '{self.config.backend_name}'...")
-        logger.info(f"Wallpaper repositories: {dirs_str} ({len(self.library.items)} images)")
-        logger.info(f"Interval: {self.config.interval}s | Telemetry refresh: {self.config.telemetry_interval}s")
+        ui.header("BOREALIS WALLPAPER DAEMON", width=76)
+        ui.action(f"Starting Borealis wallpaper daemon using backend '{ui.bold(self.config.backend_name)}'...", symbol="🌌")
+        ui.info(f"Wallpaper repositories: {ui.cyan(dirs_str)} ({ui.bold(str(len(self.library.items)))} images)", symbol="📁")
+        ui.info(f"Interval: {ui.bold(str(self.config.interval) + 's')} | Telemetry refresh: {ui.bold(str(self.config.telemetry_interval) + 's')}", symbol="⏱️ ")
 
         # Initial tick
-        self.tick()
+        init_res = self.tick()
+        if init_res.get("applied") and init_res.get("wallpaper"):
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            wp_name = Path(init_res["wallpaper"]).name
+            ui.success(f"[{ts}] Active wallpaper set to {ui.bold(wp_name)} | Mood: {ui.cyan(init_res['mood'])}")
 
         ticks_since_telemetry = 0
         telemetry_tick_limit = max(1, self.config.telemetry_interval // max(1, self.config.interval))
@@ -188,11 +193,16 @@ class BorealisEngine:
                     ticks_since_telemetry = 0
                     self.update_telemetry(force=True)
 
-                self.tick()
+                tick_res = self.tick()
+                if tick_res.get("applied") and tick_res.get("wallpaper"):
+                    ts = datetime.datetime.now().strftime("%H:%M:%S")
+                    wp_name = Path(tick_res["wallpaper"]).name
+                    ui.success(f"[{ts}] Transitioned to {ui.bold(wp_name)} | Mood: {ui.cyan(tick_res['mood'])}")
             except InterruptedError:
                 break
             except Exception as e:
                 logger.error(f"Error in daemon tick: {e}", exc_info=True)
+                ui.error(f"Error in daemon tick: {e}")
                 time.sleep(5)
 
-        logger.info("Borealis daemon stopped.")
+        ui.info("Borealis daemon stopped.", symbol="💤")

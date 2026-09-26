@@ -21,15 +21,60 @@ def setup_logging(verbose: bool) -> None:
     )
 
 
+def print_help():
+    """Prints beautiful colored usage instructions matching Folio & Flaker."""
+    print(f"""{ui.badge()} {ui.bold("Atmospheric & Astronomical Dynamic Wallpaper Engine")}
+
+{ui.blue("Usage:")}
+  borealis [command] [options]
+  borealis [options]
+
+{ui.blue("Commands:")}
+  status       Display live telemetry dashboard (solar, weather, Kp-index, mood)
+  once         Evaluate telemetry, apply wallpaper once, and exit
+  dry-run      Evaluate telemetry and preview routing without applying
+  list-tags    List all indexed wallpaper tags and asset counts
+  run          Start continuous background wallpaper daemon
+
+{ui.blue("Options:")}
+  -c, --config PATH          Path to borealis.toml configuration file
+  -d, --wallpaper-dir DIR    Path to wallpapers directory (can specify multiple)
+  -b, --backend NAME         Override display backend (awww, swww, hyprpaper, command)
+  -v, --verbose              Enable verbose debug logging
+  -h, --help                 Show this help message and exit
+  --version                  Show version and exit
+
+{ui.blue("Examples:")}
+  borealis                   # Display real-time telemetry dashboard & active mood
+  borealis status            # Inspect atmospheric, solar, & space-weather state
+  borealis once              # Evaluate and apply wallpaper immediately
+  borealis dry-run           # Inspect calculated telemetry JSON without setting wallpaper
+  borealis list-tags         # View all wallpaper categories & indexed counts
+  borealis run               # Launch continuous background daemon
+""")
+
+
 def main() -> int:
+    if any(a in ("-h", "--help", "help") for a in sys.argv[1:]):
+        print_help()
+        return 0
+
+    if any(a in ("--version", "-V") for a in sys.argv[1:]) or (len(sys.argv) == 2 and sys.argv[1] in ("-v", "version")):
+        print(f"{ui.badge()} {ui.bold(__version__)}")
+        return 0
+
+    config = load_config(None)
+
+    # When run interactively without any subcommands or options, display dashboard!
+    if len(sys.argv) == 1:
+        engine = BorealisEngine(config)
+        engine.print_status_dashboard()
+        ui.info("Quick Commands: 'borealis once' to set wallpaper, 'borealis run' for daemon, 'borealis --help' for commands.", symbol="💡")
+        return 0
+
     parser = argparse.ArgumentParser(
         prog=__app_name__,
-        description=f"{ui.badge()} {ui.bold('Atmospheric & Astronomical Dynamic Wallpaper Engine')}",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"{ui.badge()} {ui.bold(__version__)}",
+        add_help=False,
     )
     parser.add_argument(
         "-c",
@@ -59,27 +104,18 @@ def main() -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-
-    # run (default daemon mode)
     subparsers.add_parser("run", help="Start continuous background wallpaper daemon")
-
-    # once
     subparsers.add_parser("once", help="Evaluate telemetry, apply wallpaper once, and exit")
-
-    # status
     subparsers.add_parser("status", help="Display current telemetry dashboard without changing wallpaper")
-
-    # dry-run
     subparsers.add_parser("dry-run", help="Evaluate telemetry and pick wallpaper without applying it")
-
-    # list-tags
     subparsers.add_parser("list-tags", help="List all indexed wallpaper tags and item counts")
 
     args = parser.parse_args()
     setup_logging(args.verbose)
 
-    # Load configuration
-    config = load_config(args.config)
+    # Load configuration (with explicit config file if provided)
+    if args.config:
+        config = load_config(args.config)
 
     # CLI overrides
     if args.wallpaper_dir:
@@ -88,8 +124,7 @@ def main() -> int:
     if args.backend:
         config.backend_name = args.backend
 
-    # Default to run if no command specified
-    command = args.command or "run"
+    command = args.command or "status"
 
     engine = BorealisEngine(config)
 
