@@ -84,8 +84,68 @@ def main() -> int:
     if len(sys.argv) == 1:
         engine = BorealisEngine(config)
         engine.print_status_dashboard()
-        ui.info("Quick Commands: 'borealis once' to set wallpaper, 'borealis run' for daemon, 'borealis --help' for commands.", symbol="💡")
-        return 0
+        if sys.stdin.isatty():
+            action = ui.select(
+                "Quick Actions:",
+                [
+                    ("exit", "Keep current state and exit"),
+                    ("once", "Evaluate telemetry and apply matching wallpaper"),
+                    ("set", "Pick a tag / mood and set wallpaper immediately"),
+                    ("list-tags", "List all indexed wallpaper tags and counts"),
+                    ("dry-run", "Preview telemetry evaluation without changing wallpaper"),
+                    ("run", "Start continuous background daemon"),
+                ],
+            )
+            if action == "exit":
+                return 0
+            elif action == "once":
+                res = engine.tick(dry_run=False)
+                if res.get("applied"):
+                    ui.success(f"Applied {ui.bold(str(res.get('wallpaper')))} (Mood: {ui.cyan(str(res.get('mood')))})")
+                    return 0
+                else:
+                    ui.error(f"Failed to apply wallpaper: {res.get('wallpaper')}")
+                    return 1
+            elif action == "set":
+                tags = engine.library.get_tag_counts()
+                if tags:
+                    options = [(t, f"{t:<20} ({c} wallpapers)") for t, c in tags.items()]
+                    chosen_tag = ui.select("Select wallpaper tag or mood:", options)
+                    path = engine.set_wallpaper(chosen_tag)
+                    if path:
+                        ui.success(f"Applied wallpaper {ui.bold(path.name)} for tag '{ui.cyan(chosen_tag)}'")
+                        return 0
+                    else:
+                        ui.error(f"No wallpapers found matching '{chosen_tag}'.")
+                        return 1
+                else:
+                    ui.warn("No wallpaper tags indexed.")
+                    return 0
+            elif action == "list-tags":
+                tags = engine.library.get_tag_counts()
+                ui.header("BOREALIS WALLPAPER LIBRARY TAGS", width=72)
+                ui.info(f"Total wallpapers indexed: {ui.bold(str(len(engine.library.items)))}", symbol="📊")
+                dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
+                ui.info(f"Repositories: {ui.cyan(dirs_str)}", symbol="📁")
+                print(f"\n  {ui.bold('TAG')}{' ' * 22}   {ui.bold('COUNT')}")
+                print(f"  {ui.dim('-' * 25)}   {ui.dim('-' * 10)}")
+                for tag, count in tags.items():
+                    t_col = ui.cyan(f"{tag:<25}")
+                    print(f"  {t_col} : {ui.bold(str(count))} wallpapers")
+                print(ui.blue("=" * 72) + "\n")
+                return 0
+            elif action == "dry-run":
+                res = engine.tick(dry_run=True)
+                ui.info(f"Dry-run evaluation complete (Mood: {ui.bold(str(res.get('mood')))}, Rule: {ui.cyan(str(res.get('rule')))})", symbol="🔍")
+                print(json.dumps(res, indent=2))
+                return 0
+            elif action == "run":
+                ui.action(f"Starting Borealis wallpaper daemon using backend '{ui.bold(config.backend_name)}'...", symbol="🌌")
+                engine.run_daemon()
+                return 0
+        else:
+            ui.info("Quick Commands: 'borealis once' to set wallpaper, 'borealis run' for daemon, 'borealis --help' for commands.", symbol="💡")
+            return 0
 
     parser = argparse.ArgumentParser(
         prog=__app_name__,
@@ -143,7 +203,7 @@ def main() -> int:
     subparsers.add_parser("list-tags", help="List all indexed wallpaper tags and item counts")
 
     set_parser = subparsers.add_parser("set", help="Immediately apply a wallpaper matching a tag, mood, or image file")
-    set_parser.add_argument("tag", help="Tag, mood name (e.g. cosmic_void, rain, aurora), or image path")
+    set_parser.add_argument("tag", nargs="?", default=None, help="Tag, mood name (e.g. cosmic_void, rain, aurora), or image path")
 
     args = parser.parse_args()
     if args.version:
@@ -173,6 +233,19 @@ def main() -> int:
 
     elif command == "set":
         tag = args.tag
+        if not tag:
+            if sys.stdin.isatty():
+                tags = engine.library.get_tag_counts()
+                if tags:
+                    options = [(t, f"{t:<20} ({c} wallpapers)") for t, c in tags.items()]
+                    tag = ui.select("Select wallpaper tag or mood to apply:", options)
+                else:
+                    ui.error("No wallpaper tags indexed.")
+                    return 1
+            else:
+                ui.error("Missing tag argument for 'borealis set'. Example: borealis set cosmic_void")
+                return 1
+
         path = engine.set_wallpaper(tag)
         if path:
             ui.success(f"Applied wallpaper {ui.bold(path.name)} for tag '{ui.cyan(tag)}'")
