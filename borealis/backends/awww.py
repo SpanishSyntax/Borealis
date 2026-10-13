@@ -10,7 +10,9 @@ from borealis.backends.base import BaseBackend
 class AwwwBackend(BaseBackend):
     """Integrates with awww-daemon and awww CLI."""
 
-    def __init__(self, transition_type: str = "simple", transition_step: int = 90) -> None:
+    def __init__(
+        self, transition_type: str = "simple", transition_step: int = 90
+    ) -> None:
         super().__init__("awww")
         self.transition_type = transition_type
         self.transition_step = transition_step

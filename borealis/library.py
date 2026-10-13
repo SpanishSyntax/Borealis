@@ -120,7 +120,9 @@ class WallpaperLibrary:
 
                 self.items.append(WallpaperItem(resolved, tags, weight=weight))
 
-    def select(self, mood: str, tags: Optional[List[str]] = None) -> Optional[pathlib.Path]:
+    def select(
+        self, mood: str, tags: Optional[List[str]] = None
+    ) -> Optional[pathlib.Path]:
         """Select a wallpaper matching the target mood or tags, avoiding recent repeats."""
         if not self.items:
             return None
@@ -136,7 +138,9 @@ class WallpaperLibrary:
         # Fallback layer 1: if no direct match, check flat files at root of each root_dir
         if not candidates:
             candidates = [
-                item for item in self.items if any(item.path.parent == rd for rd in self.root_dirs)
+                item
+                for item in self.items
+                if any(item.path.parent == rd for rd in self.root_dirs)
             ]
 
         # Fallback layer 2: all wallpapers

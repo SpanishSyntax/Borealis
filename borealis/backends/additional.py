@@ -10,7 +10,9 @@ from borealis.backends.base import BaseBackend
 class SwwwBackend(BaseBackend):
     """Integrates with swww-daemon and swww CLI."""
 
-    def __init__(self, transition_type: str = "fade", transition_step: int = 90) -> None:
+    def __init__(
+        self, transition_type: str = "fade", transition_step: int = 90
+    ) -> None:
         super().__init__("swww")
         self.transition_type = transition_type
         self.transition_step = transition_step
@@ -18,7 +20,9 @@ class SwwwBackend(BaseBackend):
     def ensure_daemon(self) -> None:
         if shutil.which("swww-daemon") is None:
             return
-        check = subprocess.run(["swww", "query"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        check = subprocess.run(
+            ["swww", "query"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
         if check.returncode != 0:
             try:
                 subprocess.Popen(
@@ -65,7 +69,11 @@ class HyprpaperBackend(BaseBackend):
         p = str(image_path)
         try:
             # Preload and set wallpaper on all monitors
-            subprocess.run(["hyprctl", "hyprpaper", "preload", p], stdout=subprocess.DEVNULL, timeout=4)
+            subprocess.run(
+                ["hyprctl", "hyprpaper", "preload", p],
+                stdout=subprocess.DEVNULL,
+                timeout=4,
+            )
             res = subprocess.run(
                 ["hyprctl", "hyprpaper", "wallpaper", f",{p}"],
                 stdout=subprocess.DEVNULL,

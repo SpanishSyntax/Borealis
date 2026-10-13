@@ -18,9 +18,15 @@ class BaseSensor(ABC):
         """Fetch fresh telemetry data. Context contains telemetry from previously run sensors."""
         pass
 
-    def update(self, context: Dict[str, Any], current_time: float, force: bool = False) -> Dict[str, Any]:
+    def update(
+        self, context: Dict[str, Any], current_time: float, force: bool = False
+    ) -> Dict[str, Any]:
         """Update sensor data, returning cached data if TTL has not expired."""
-        if not force and self._cached_data and (current_time - self._last_fetched) < self.ttl:
+        if (
+            not force
+            and self._cached_data
+            and (current_time - self._last_fetched) < self.ttl
+        ):
             return self._cached_data
 
         try:

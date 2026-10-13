@@ -36,10 +36,9 @@ class SolarSensor(BaseSensor):
 
         # Sine of Solar Elevation Angle:
         # sin(alpha) = sin(lat)*sin(dec) + cos(lat)*cos(dec)*cos(time_radians - pi)
-        sin_elevation = (
-            math.sin(lat_rad) * math.sin(declination)
-            + math.cos(lat_rad) * math.cos(declination) * math.cos(time_radians - math.pi)
-        )
+        sin_elevation = math.sin(lat_rad) * math.sin(declination) + math.cos(
+            lat_rad
+        ) * math.cos(declination) * math.cos(time_radians - math.pi)
 
         # Clamp sin_elevation to [-1.0, 1.0] for asin
         clamped_sin = max(-1.0, min(1.0, sin_elevation))

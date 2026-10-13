@@ -57,7 +57,9 @@ class RuleEvaluator:
     def __init__(self, rules: Optional[List[Rule]] = None) -> None:
         self.rules = sorted(rules or [], key=lambda r: r.priority, reverse=True)
 
-    def evaluate(self, context: Dict[str, Any]) -> Tuple[str, List[str], Optional[Rule]]:
+    def evaluate(
+        self, context: Dict[str, Any]
+    ) -> Tuple[str, List[str], Optional[Rule]]:
         """Evaluate rules in order of priority.
 
         Returns (mood, tags, matched_rule). If no rule matches, uses the 3D default matrix.
@@ -92,7 +94,9 @@ class RuleEvaluator:
         mood, tags = self._evaluate_default_matrix(context)
         return mood, tags, None
 
-    def _evaluate_default_matrix(self, context: Dict[str, Any]) -> Tuple[str, List[str]]:
+    def _evaluate_default_matrix(
+        self, context: Dict[str, Any]
+    ) -> Tuple[str, List[str]]:
         """Classic 3D environmental mood classification fallback."""
         solar = context.get("solar", {})
         weather = context.get("weather", {})

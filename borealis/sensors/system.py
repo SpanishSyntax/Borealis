@@ -44,7 +44,9 @@ class SystemSensor(BaseSensor):
                             pass
                     if status_file.exists():
                         try:
-                            is_charging = status_file.read_text().strip().lower() == "charging"
+                            is_charging = (
+                                status_file.read_text().strip().lower() == "charging"
+                            )
                         except Exception:
                             pass
                     break
@@ -58,5 +60,7 @@ class SystemSensor(BaseSensor):
             "season": season,
             "battery_percent": battery_pct,
             "is_charging": is_charging,
-            "is_low_battery": (battery_pct is not None and battery_pct < 20 and not is_charging),
+            "is_low_battery": (
+                battery_pct is not None and battery_pct < 20 and not is_charging
+            ),
         }

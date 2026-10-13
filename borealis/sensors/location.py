@@ -43,7 +43,11 @@ class LocationSensor(BaseSensor):
             with urllib.request.urlopen(req, timeout=4) as response:
                 if response.status == 200:
                     payload = json.loads(response.read().decode("utf-8"))
-                    if "latitude" in payload and "longitude" in payload and not payload.get("error"):
+                    if (
+                        "latitude" in payload
+                        and "longitude" in payload
+                        and not payload.get("error")
+                    ):
                         return {
                             "latitude": float(payload["latitude"]),
                             "longitude": float(payload["longitude"]),

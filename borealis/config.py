@@ -121,7 +121,9 @@ DEFAULT_RULES = [
 class Config:
     """Parsed Borealis runtime configuration."""
 
-    def __init__(self, raw: Dict[str, Any], config_path: Optional[pathlib.Path] = None) -> None:
+    def __init__(
+        self, raw: Dict[str, Any], config_path: Optional[pathlib.Path] = None
+    ) -> None:
         self.config_path = config_path
         self.raw = raw
 
@@ -134,11 +136,17 @@ class Config:
 
         # Wallpaper directories: config -> env -> fallback
         self.wallpaper_dirs: List[pathlib.Path] = []
-        raw_dirs = gen.get("wallpaper_dirs") or gen.get("wallpaper_dir") or os.environ.get("BOREALIS_WALLPAPER_DIR")
+        raw_dirs = (
+            gen.get("wallpaper_dirs")
+            or gen.get("wallpaper_dir")
+            or os.environ.get("BOREALIS_WALLPAPER_DIR")
+        )
 
         if raw_dirs:
             if isinstance(raw_dirs, list):
-                self.wallpaper_dirs = [pathlib.Path(d).expanduser().resolve() for d in raw_dirs]
+                self.wallpaper_dirs = [
+                    pathlib.Path(d).expanduser().resolve() for d in raw_dirs
+                ]
             elif isinstance(raw_dirs, str):
                 # Allow comma or colon separated paths in string
                 delimiters = [",", ":"]
@@ -147,7 +155,9 @@ class Config:
                     if delim in raw_dirs:
                         parts = [p.strip() for p in raw_dirs.split(delim)]
                         break
-                self.wallpaper_dirs = [pathlib.Path(p).expanduser().resolve() for p in parts if p.strip()]
+                self.wallpaper_dirs = [
+                    pathlib.Path(p).expanduser().resolve() for p in parts if p.strip()
+                ]
 
         if not self.wallpaper_dirs:
             # Fallback to local ./wallpapers or ~/.local/share/wallpapers
@@ -155,10 +165,14 @@ class Config:
             if local_wp.is_dir():
                 self.wallpaper_dirs = [local_wp]
             else:
-                self.wallpaper_dirs = [pathlib.Path.home() / ".local" / "share" / "wallpapers"]
+                self.wallpaper_dirs = [
+                    pathlib.Path.home() / ".local" / "share" / "wallpapers"
+                ]
 
         # Backwards compatibility property
-        self.wallpaper_dir = self.wallpaper_dirs[0] if self.wallpaper_dirs else pathlib.Path(".")
+        self.wallpaper_dir = (
+            self.wallpaper_dirs[0] if self.wallpaper_dirs else pathlib.Path(".")
+        )
 
         # [location] section
         loc = raw.get("location", {})

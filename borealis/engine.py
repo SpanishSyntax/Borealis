@@ -76,7 +76,9 @@ class BorealisEngine:
         self._last_telemetry_time = now
         return context
 
-    def evaluate_and_pick(self, force_telemetry: bool = False) -> Tuple[str, List[str], Optional[Path], Optional[Rule], Dict[str, Any]]:
+    def evaluate_and_pick(
+        self, force_telemetry: bool = False
+    ) -> Tuple[str, List[str], Optional[Path], Optional[Rule], Dict[str, Any]]:
         """Run telemetry evaluation, match rules, and select candidate wallpaper."""
         context = self.update_telemetry(force=force_telemetry)
         mood, tags, matched_rule = self.rule_evaluator.evaluate(context)
@@ -100,7 +102,9 @@ class BorealisEngine:
             success = self.backend.apply(path)
             result["applied"] = success
             if not success:
-                logger.warning(f"Backend '{self.backend.name}' failed to apply wallpaper: {path}")
+                logger.warning(
+                    f"Backend '{self.backend.name}' failed to apply wallpaper: {path}"
+                )
 
         return result
 
@@ -143,23 +147,37 @@ class BorealisEngine:
         geo_hdr = ui.bold(f"{'Geographic Origin':<25}")
         solar_hdr = ui.bold(f"{'Solar Elevation':<25}")
         lumen_hdr = ui.bold(f"{'Atmospheric Lumens':<25}")
-        print(f"  {geo_hdr} : {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})")
-        print(f"  {solar_hdr} : {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))})")
-        print(f"  {lumen_hdr} : {sol.get('estimated_lumens', 0)} lm (sin_elev: {round(sol.get('sin_elevation', 0), 3)})")
+        print(
+            f"  {geo_hdr} : {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})"
+        )
+        print(
+            f"  {solar_hdr} : {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))})"
+        )
+        print(
+            f"  {lumen_hdr} : {sol.get('estimated_lumens', 0)} lm (sin_elev: {round(sol.get('sin_elevation', 0), 3)})"
+        )
         print(ui.dim("-" * 76))
 
         therm_hdr = ui.bold(f"{'Thermal State':<25}")
         moist_hdr = ui.bold(f"{'Moisture Content':<25}")
         cloud_hdr = ui.bold(f"{'Cloud Canopy':<25}")
         geo_scale_hdr = ui.bold(f"{'Geomagnetic Scale':<25}")
-        print(f"  {therm_hdr} : {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))})")
-        print(f"  {moist_hdr} : {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})")
+        print(
+            f"  {therm_hdr} : {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))})"
+        )
+        print(
+            f"  {moist_hdr} : {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})"
+        )
         print(f"  {cloud_hdr} : {wth.get('clouds', 0)}%")
-        print(f"  {geo_scale_hdr} : Kp-Index {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})")
+        print(
+            f"  {geo_scale_hdr} : Kp-Index {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})"
+        )
         print(ui.dim("-" * 76))
 
         time_hdr = ui.bold(f"{'Local Temporal State':<25}")
-        print(f"  {time_hdr} : {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))})")
+        print(
+            f"  {time_hdr} : {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))})"
+        )
         if sys_ctx.get("battery_percent") is not None:
             batt_hdr = ui.bold(f"{'Battery Telemetry':<25}")
             charging_str = "Charging" if sys_ctx.get("is_charging") else "Discharging"
@@ -169,11 +187,17 @@ class BorealisEngine:
         mood_hdr = ui.cyan(f"{'ACTIVE MOOD VECTOR':<25}")
         dec_hdr = ui.bold(f"{'Decision Origin':<25}")
         lib_hdr = ui.bold(f"{'Wallpaper Library':<25}")
-        rule_desc = f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
+        rule_desc = (
+            f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
+        )
         dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
-        print(f"  {mood_hdr} : {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})")
+        print(
+            f"  {mood_hdr} : {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})"
+        )
         print(f"  {dec_hdr} : {ui.cyan(rule_desc)}")
-        print(f"  {lib_hdr} : {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}")
+        print(
+            f"  {lib_hdr} : {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}"
+        )
         if path:
             sel_hdr = ui.bold(f"{'Selected Wallpaper':<25}")
             print(f"  {sel_hdr} : {ui.green(str(path))}")
@@ -184,7 +208,10 @@ class BorealisEngine:
         self._running = True
 
         def _handle_signal(signum, frame):
-            ui.info("Termination signal received. Shutting down Borealis daemon.", symbol="🛑")
+            ui.info(
+                "Termination signal received. Shutting down Borealis daemon.",
+                symbol="🛑",
+            )
             self._running = False
 
         signal.signal(signal.SIGINT, _handle_signal)
@@ -192,19 +219,32 @@ class BorealisEngine:
 
         dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
         ui.header("BOREALIS WALLPAPER DAEMON", width=76)
-        ui.action(f"Starting Borealis wallpaper daemon using backend '{ui.bold(self.config.backend_name)}'...", symbol="🌌")
-        ui.info(f"Wallpaper repositories: {ui.cyan(dirs_str)} ({ui.bold(str(len(self.library.items)))} images)", symbol="📁")
-        ui.info(f"Interval: {ui.bold(str(self.config.interval) + 's')} | Telemetry refresh: {ui.bold(str(self.config.telemetry_interval) + 's')}", symbol="⏱️ ")
+        ui.action(
+            f"Starting Borealis wallpaper daemon using backend '{ui.bold(self.config.backend_name)}'...",
+            symbol="🌌",
+        )
+        ui.info(
+            f"Wallpaper repositories: {ui.cyan(dirs_str)} ({ui.bold(str(len(self.library.items)))} images)",
+            symbol="📁",
+        )
+        ui.info(
+            f"Interval: {ui.bold(str(self.config.interval) + 's')} | Telemetry refresh: {ui.bold(str(self.config.telemetry_interval) + 's')}",
+            symbol="⏱️ ",
+        )
 
         # Initial tick
         init_res = self.tick()
         if init_res.get("applied") and init_res.get("wallpaper"):
             ts = datetime.datetime.now().strftime("%H:%M:%S")
             wp_name = Path(init_res["wallpaper"]).name
-            ui.success(f"[{ts}] Active wallpaper set to {ui.bold(wp_name)} | Mood: {ui.cyan(init_res['mood'])}")
+            ui.success(
+                f"[{ts}] Active wallpaper set to {ui.bold(wp_name)} | Mood: {ui.cyan(init_res['mood'])}"
+            )
 
         ticks_since_telemetry = 0
-        telemetry_tick_limit = max(1, self.config.telemetry_interval // max(1, self.config.interval))
+        telemetry_tick_limit = max(
+            1, self.config.telemetry_interval // max(1, self.config.interval)
+        )
 
         while self._running:
             try:
@@ -221,7 +261,9 @@ class BorealisEngine:
                 if tick_res.get("applied") and tick_res.get("wallpaper"):
                     ts = datetime.datetime.now().strftime("%H:%M:%S")
                     wp_name = Path(tick_res["wallpaper"]).name
-                    ui.success(f"[{ts}] Transitioned to {ui.bold(wp_name)} | Mood: {ui.cyan(tick_res['mood'])}")
+                    ui.success(
+                        f"[{ts}] Transitioned to {ui.bold(wp_name)} | Mood: {ui.cyan(tick_res['mood'])}"
+                    )
             except InterruptedError:
                 break
             except Exception as e:
