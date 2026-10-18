@@ -77,7 +77,7 @@ def main() -> int:
     if any(a in ("--version", "-V") for a in sys.argv[1:]) or (
         len(sys.argv) == 2 and sys.argv[1] in ("-v", "version")
     ):
-        print(f"{ui.badge()} {ui.bold(__version__)}")
+        print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
         return 0
 
     config = load_config(None)
@@ -245,7 +245,7 @@ def main() -> int:
 
     args = parser.parse_args()
     if args.version:
-        print(f"{ui.badge()} {ui.bold(__version__)}")
+        print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
         return 0
 
     setup_logging(args.verbose)

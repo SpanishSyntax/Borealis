@@ -59,9 +59,15 @@
         wallpapers = wallpapersPackage;
       };
 
-      apps.default = {
-        type = "app";
-        program = "${borealisPackage}/bin/borealis";
+      apps = {
+        default = {
+          type = "app";
+          program = "${borealisPackage}/bin/borealis";
+        };
+        borealis = {
+          type = "app";
+          program = "${borealisPackage}/bin/borealis";
+        };
       };
 
       devShells.default = pkgs.mkShell {
@@ -74,6 +80,38 @@
       };
     })
     // {
+      overlays = {
+        default = final: prev: {
+          borealis = self.packages.${prev.stdenv.hostPlatform.system}.default;
+        };
+        borealis = self.overlays.default;
+      };
+
+      nixosModules = {
+        default = self.nixosModules.borealis;
+        borealis = {
+          config,
+          lib,
+          pkgs,
+          ...
+        }: let
+          cfg = config.programs.borealis;
+          system = pkgs.stdenv.hostPlatform.system;
+        in {
+          options.programs.borealis = {
+            enable = lib.mkEnableOption "Borealis dynamic atmospheric wallpaper engine";
+            package = lib.mkOption {
+              type = lib.types.package;
+              default = self.packages.${system}.default;
+              description = "The Borealis package to install system-wide.";
+            };
+          };
+          config = lib.mkIf cfg.enable {
+            environment.systemPackages = [cfg.package];
+          };
+        };
+      };
+
       homeManagerModules = {
         default = self.homeManagerModules.borealis;
         borealis = {
