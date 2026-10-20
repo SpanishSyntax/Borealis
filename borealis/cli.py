@@ -9,7 +9,7 @@ from pathlib import Path
 from borealis import __app_name__, __version__
 from borealis.config import load_config
 from borealis.engine import BorealisEngine
-from borealis.ui import ui
+from borealis.ui import add_color_args, handle_color_args, ui
 
 
 def setup_logging(verbose: bool) -> None:
@@ -19,17 +19,6 @@ def setup_logging(verbose: bool) -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-
-def handle_color_args(argv: list[str] | None = None):
-    args = argv if argv is not None else sys.argv[1:]
-    for i, arg in enumerate(args):
-        if arg == "--no-color":
-            ui.set_color_mode("never")
-        elif arg.startswith("--color="):
-            ui.set_color_mode(arg.split("=", 1)[1])
-        elif arg == "--color" and i + 1 < len(args):
-            ui.set_color_mode(args[i + 1])
 
 
 def print_help():
@@ -200,17 +189,7 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Enable verbose debug logging",
     )
-    parser.add_argument(
-        "--color",
-        choices=["auto", "always", "never"],
-        default="auto",
-        help="Color output mode (auto, always, never)",
-    )
-    parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable colored output",
-    )
+    add_color_args(parser)
     parser.add_argument(
         "-V",
         "--version",
