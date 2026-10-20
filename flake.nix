@@ -31,6 +31,10 @@
           pkgs.makeWrapper
         ];
 
+        nativeCheckInputs = [
+          pkgs.python3Packages.pytest
+        ];
+
         # Add procps for pgrep (daemon checking)
         postFixup = ''
           wrapProgram $out/bin/borealis \
@@ -74,6 +78,7 @@
         packages = with pkgs; [
           python3
           python3Packages.setuptools
+          python3Packages.pytest
           procps
           awww
         ];

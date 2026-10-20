@@ -20,9 +20,18 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+test = [
+  "pytest>=7.0",
+]
+
 [project.scripts]
 borealis = "borealis.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["borealis*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

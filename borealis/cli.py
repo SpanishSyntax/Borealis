@@ -21,14 +21,15 @@ def setup_logging(verbose: bool) -> None:
     )
 
 
-def handle_color_args():
-    for i, arg in enumerate(sys.argv[1:]):
+def handle_color_args(argv: list[str] | None = None):
+    args = argv if argv is not None else sys.argv[1:]
+    for i, arg in enumerate(args):
         if arg == "--no-color":
             ui.set_color_mode("never")
         elif arg.startswith("--color="):
             ui.set_color_mode(arg.split("=", 1)[1])
-        elif arg == "--color" and i + 1 < len(sys.argv[1:]):
-            ui.set_color_mode(sys.argv[1:][i + 1])
+        elif arg == "--color" and i + 1 < len(args):
+            ui.set_color_mode(args[i + 1])
 
 
 def print_help():
@@ -67,15 +68,16 @@ def print_help():
 """)
 
 
-def main() -> int:
-    handle_color_args()
+def main(argv: list[str] | None = None) -> int:
+    raw_args = list(argv) if argv is not None else sys.argv[1:]
+    handle_color_args(raw_args)
 
-    if any(a in ("-h", "--help", "help") for a in sys.argv[1:]):
+    if any(a in ("-h", "--help", "help") for a in raw_args):
         print_help()
         return 0
 
-    if any(a in ("--version", "-V") for a in sys.argv[1:]) or (
-        len(sys.argv) == 2 and sys.argv[1] in ("-v", "version")
+    if any(a in ("--version", "-V") for a in raw_args) or (
+        len(raw_args) == 1 and raw_args[0] in ("-v", "version")
     ):
         print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
         return 0
@@ -83,7 +85,7 @@ def main() -> int:
     config = load_config(None)
 
     # When run interactively without any subcommands or options, display dashboard!
-    if len(sys.argv) == 1:
+    if not raw_args:
         engine = BorealisEngine(config)
         engine.print_status_dashboard()
         if sys.stdin.isatty():
@@ -241,7 +243,7 @@ def main() -> int:
         help="Tag, mood name (e.g. cosmic_void, rain, aurora), or image path",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(raw_args)
     if args.version:
         print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
         return 0
