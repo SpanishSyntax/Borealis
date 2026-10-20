@@ -134,19 +134,17 @@ def main() -> int:
                     return 0
             elif action == "list-tags":
                 tags = engine.library.get_tag_counts()
-                ui.header("BOREALIS WALLPAPER LIBRARY TAGS", width=72)
-                ui.info(
-                    f"Total wallpapers indexed: {ui.bold(str(len(engine.library.items)))}",
-                    symbol="📊",
-                )
                 dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
-                ui.info(f"Repositories: {ui.cyan(dirs_str)}", symbol="📁")
-                print(f"\n  {ui.bold('TAG')}{' ' * 22}   {ui.bold('COUNT')}")
-                print(f"  {ui.dim('-' * 25)}   {ui.dim('-' * 10)}")
+                lines = [
+                    f"{ui.bold('Total Wallpapers:')}  {len(engine.library.items)} indexed",
+                    f"{ui.bold('Repositories:')}      {ui.dim(dirs_str)}",
+                    "",
+                    f"{ui.bold('TAG'):<28} {ui.bold('COUNT')}",
+                    ui.dim("-" * 42),
+                ]
                 for tag, count in tags.items():
-                    t_col = ui.cyan(f"{tag:<25}")
-                    print(f"  {t_col} : {ui.bold(str(count))} wallpapers")
-                print(ui.blue("=" * 72) + "\n")
+                    lines.append(f"{ui.cyan(tag):<35} {ui.bold(str(count))} wallpapers")
+                ui.panel("BOREALIS WALLPAPER LIBRARY TAGS", lines)
                 return 0
             elif action == "dry-run":
                 res = engine.tick(dry_run=True)
@@ -313,22 +311,17 @@ def main() -> int:
 
     elif command == "list-tags":
         tags = engine.library.get_tag_counts()
-        ui.header("BOREALIS WALLPAPER LIBRARY TAGS", width=72)
-        ui.info(
-            f"Total wallpapers indexed: {ui.bold(str(len(engine.library.items)))}",
-            symbol="📊",
-        )
         dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
-        ui.info(f"Repositories: {ui.cyan(dirs_str)}", symbol="📁")
-        print(ui.dim("-" * 72))
-        tag_hdr = ui.bold(f"{'TAG':<25}")
-        count_hdr = ui.bold("COUNT")
-        print(f"  {tag_hdr}   {count_hdr}")
-        print(f"  {ui.dim('-' * 25)}   {ui.dim('-' * 10)}")
+        lines = [
+            f"{ui.bold('Total Wallpapers:')}  {len(engine.library.items)} indexed",
+            f"{ui.bold('Repositories:')}      {ui.dim(dirs_str)}",
+            "",
+            f"{ui.bold('TAG'):<28} {ui.bold('COUNT')}",
+            ui.dim("-" * 42),
+        ]
         for tag, count in tags.items():
-            t_col = ui.cyan(f"{tag:<25}")
-            print(f"  {t_col} : {ui.bold(str(count))} wallpapers")
-        print(ui.blue("=" * 72) + "\n")
+            lines.append(f"{ui.cyan(tag):<35} {ui.bold(str(count))} wallpapers")
+        ui.panel("BOREALIS WALLPAPER LIBRARY TAGS", lines)
         return 0
 
     elif command == "once":

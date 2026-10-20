@@ -4,7 +4,6 @@ import datetime
 import logging
 import random
 import signal
-import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -141,67 +140,31 @@ class BorealisEngine:
         sys_ctx = ctx.get("system", {})
 
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        ui.header(f"BOREALIS TELEMETRY DASHBOARD | {now}", width=76)
-
-        geo_hdr = ui.bold(f"{'Geographic Origin':<25}")
-        solar_hdr = ui.bold(f"{'Solar Elevation':<25}")
-        lumen_hdr = ui.bold(f"{'Atmospheric Lumens':<25}")
-        print(
-            f"  {geo_hdr} : {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})"
-        )
-        print(
-            f"  {solar_hdr} : {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))})"
-        )
-        print(
-            f"  {lumen_hdr} : {sol.get('estimated_lumens', 0)} lm (sin_elev: {round(sol.get('sin_elevation', 0), 3)})"
-        )
-        print(ui.dim("-" * 76))
-
-        therm_hdr = ui.bold(f"{'Thermal State':<25}")
-        moist_hdr = ui.bold(f"{'Moisture Content':<25}")
-        cloud_hdr = ui.bold(f"{'Cloud Canopy':<25}")
-        geo_scale_hdr = ui.bold(f"{'Geomagnetic Scale':<25}")
-        print(
-            f"  {therm_hdr} : {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))})"
-        )
-        print(
-            f"  {moist_hdr} : {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})"
-        )
-        print(f"  {cloud_hdr} : {wth.get('clouds', 0)}%")
-        print(
-            f"  {geo_scale_hdr} : Kp-Index {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})"
-        )
-        print(ui.dim("-" * 76))
-
-        time_hdr = ui.bold(f"{'Local Temporal State':<25}")
-        print(
-            f"  {time_hdr} : {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))})"
-        )
-        if sys_ctx.get("battery_percent") is not None:
-            batt_hdr = ui.bold(f"{'Battery Telemetry':<25}")
-            charging_str = "Charging" if sys_ctx.get("is_charging") else "Discharging"
-            print(f"  {batt_hdr} : {sys_ctx.get('battery_percent')}% ({charging_str})")
-        print(ui.dim("-" * 76))
-
-        mood_hdr = ui.cyan(f"{'ACTIVE MOOD VECTOR':<25}")
-        dec_hdr = ui.bold(f"{'Decision Origin':<25}")
-        lib_hdr = ui.bold(f"{'Wallpaper Library':<25}")
         rule_desc = (
             f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
         )
         dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
-        print(
-            f"  {mood_hdr} : {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})"
+        charging_str = "Charging" if sys_ctx.get("is_charging") else "Discharging"
+        batt_str = (
+            f" | Batt: {sys_ctx.get('battery_percent')}% ({charging_str})"
+            if sys_ctx.get("battery_percent") is not None
+            else ""
         )
-        print(f"  {dec_hdr} : {ui.cyan(rule_desc)}")
-        print(
-            f"  {lib_hdr} : {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}"
-        )
+
+        lines = [
+            f"{ui.bold('Geographic Origin:')}  {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})",
+            f"{ui.bold('Solar Elevation:')}    {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))}) — {sol.get('estimated_lumens', 0)} lm",
+            f"{ui.bold('Thermal State:')}      {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))}) | Hum: {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})",
+            f"{ui.bold('Atmosphere / Space:')} Cloud: {wth.get('clouds', 0)}% | Kp-Index: {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})",
+            f"{ui.bold('Temporal State:')}     {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))}){batt_str}",
+            f"{ui.bold('Active Mood Vector:')} {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})",
+            f"{ui.bold('Decision Origin:')}    {ui.cyan(rule_desc)}",
+            f"{ui.bold('Wallpaper Library:')} {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}",
+        ]
         if path:
-            sel_hdr = ui.bold(f"{'Selected Wallpaper':<25}")
-            print(f"  {sel_hdr} : {ui.green(str(path))}")
-        print(ui.blue("=" * 76) + "\n")
+            lines.append(f"{ui.bold('Target Wallpaper:')}   {ui.green(str(path))}")
+
+        ui.panel(f"BOREALIS TELEMETRY DASHBOARD | {now}", lines)
 
     def run_daemon(self) -> None:
         """Start the background daemon loop."""
