@@ -1,4 +1,4 @@
-# Borealis 🌌❄️
+# Borealis 🌌
 
 > **Atmospheric, Astronomical & Space-Weather Dynamic Wallpaper Engine for Linux & Wayland**
 
