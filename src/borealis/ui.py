@@ -1,8 +1,8 @@
-"""Terminal UI interface for Borealis, powered by Rime."""
+"""Terminal UI interface for Borealis, powered by Prism."""
 
 from __future__ import annotations
 
-from rime import (
+from prism import (
     UI,
     Spinner,
     add_color_args,

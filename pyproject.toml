@@ -19,7 +19,7 @@ classifiers = [
   "Topic :: Desktop Environment",
 ]
 dependencies = [
-  "rime",
+  "prism",
 ]
 
 [project.optional-dependencies]
@@ -31,9 +31,9 @@ test = [
 borealis = "borealis.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
 include = ["borealis*"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 testpaths = ["tests"]

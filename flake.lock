@@ -52,7 +52,7 @@
         "type": "github"
       }
     },
-    "rime": {
+    "prism": {
       "inputs": {
         "flake-utils": "flake-utils_2",
         "nixpkgs": [
@@ -60,16 +60,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1792519813,
-        "narHash": "sha256-tsO7zIViUgT4CP8zzBq5/r0sm4juRb6hyRXa6dNvPEo=",
+        "lastModified": 1792958104,
+        "narHash": "sha256-Ua1dUggFZcawcWxyaEEC9YMJKPtLn4lwaWhuhlx5srU=",
         "owner": "SpanishSyntax",
-        "repo": "Rime",
-        "rev": "5cdfd796b427b52e3ef467bb0a7cd3120c58f652",
+        "repo": "Prism",
+        "rev": "19c2b1f07641cfd320c401be12c73a0b176fb5b2",
         "type": "github"
       },
       "original": {
         "owner": "SpanishSyntax",
-        "repo": "Rime",
+        "repo": "Prism",
         "type": "github"
       }
     },
@@ -77,7 +77,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
-        "rime": "rime"
+        "prism": "prism"
       }
     },
     "systems": {
