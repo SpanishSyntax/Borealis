@@ -88,10 +88,11 @@
 
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
-          python3
-          python3Packages.setuptools
-          python3Packages.pytest
-          python3Packages.prism
+          (python3.withPackages (ps: [
+            ps.setuptools
+            ps.pytest
+            ps.prism
+          ]))
           procps
           awww
         ];
