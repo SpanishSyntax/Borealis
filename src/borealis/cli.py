@@ -221,23 +221,29 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-    subparsers.add_parser("run", help="Start continuous background wallpaper daemon")
-    subparsers.add_parser(
+    p_run = subparsers.add_parser("run", help="Start continuous background wallpaper daemon")
+    add_color_args(p_run)
+    p_once = subparsers.add_parser(
         "once", help="Evaluate telemetry, apply wallpaper once, and exit"
     )
-    subparsers.add_parser(
+    add_color_args(p_once)
+    p_status = subparsers.add_parser(
         "status", help="Display current telemetry dashboard without changing wallpaper"
     )
-    subparsers.add_parser(
+    add_color_args(p_status)
+    p_dry_run = subparsers.add_parser(
         "dry-run", help="Evaluate telemetry and pick wallpaper without applying it"
     )
-    subparsers.add_parser(
+    add_color_args(p_dry_run)
+    p_list_tags = subparsers.add_parser(
         "list-tags", help="List all indexed wallpaper tags and item counts"
     )
+    add_color_args(p_list_tags)
 
     set_parser = subparsers.add_parser(
         "set", help="Immediately apply a wallpaper matching a tag, mood, or image file"
     )
+    add_color_args(set_parser)
     set_parser.add_argument(
         "tag",
         nargs="?",
