@@ -91,10 +91,7 @@ def main(argv: list[str] | None = None) -> int:
         print_help()
         return 0
 
-    if any(a in ("--version", "-V") for a in raw_args) or (
-        len(raw_args) == 1 and raw_args[0] in ("-v", "version")
-    ):
-        print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
+    if ui.handle_version_arg(raw_args, __version__):
         return 0
 
     config = load_config(None)
@@ -103,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
     if not raw_args:
         engine = BorealisEngine(config)
         engine.print_status_dashboard()
-        if sys.stdin.isatty():
+        if ui.is_interactive:
             action = ui.select(
                 "Quick Actions:",
                 [
@@ -250,13 +247,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(raw_args)
     if args.version:
-        if ui.is_json:
-            print(json.dumps({"app": "borealis", "version": __version__}))
-            return 0
-        if ui.is_agent:
-            print(f"borealis {__version__}")
-            return 0
-        print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
+        ui.version(__version__)
         return 0
 
     setup_logging(args.verbose)
@@ -319,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
             f"Dry-run evaluation complete (Mood: {ui.bold(str(res.get('mood')))}, Rule: {ui.cyan(str(res.get('rule')))})",
             symbol="🔍",
         )
-        print(json.dumps(res, indent=2))
+        ui.json(res)
         return 0
 
     elif command == "list-tags":
