@@ -133,13 +133,29 @@ class BorealisEngine:
     def print_status_dashboard(self) -> None:
         """Print an informative, formatted telemetry dashboard to terminal."""
         mood, tags, path, rule, ctx = self.evaluate_and_pick(force_telemetry=True)
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if ui.is_json:
+            import json
+
+            data = {
+                "status": "ok",
+                "timestamp": now,
+                "mood": mood,
+                "tags": tags,
+                "target_wallpaper": str(path) if path else None,
+                "rule": rule.name if rule else None,
+                "context": ctx,
+                "indexed_wallpapers": len(self.library.items),
+            }
+            print(json.dumps(data, indent=2))
+            return
+
         loc = ctx.get("location", {})
         sol = ctx.get("solar", {})
         wth = ctx.get("weather", {})
         spc = ctx.get("space", {})
         sys_ctx = ctx.get("system", {})
-
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         rule_desc = (
             f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
         )

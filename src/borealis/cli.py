@@ -23,6 +23,32 @@ def setup_logging(verbose: bool) -> None:
 
 def print_help():
     """Prints beautiful colored usage instructions matching Folio & Flaker."""
+    if ui.is_agent:
+        print(f"""Borealis v{__version__} - Atmospheric & Astronomical Dynamic Wallpaper Engine
+Usage: borealis [command] [options]
+
+Commands:
+  status                 Display live telemetry dashboard (solar, weather, mood)
+  set <tag>              Apply a wallpaper matching tag, mood, or image file
+  once                   Evaluate telemetry, apply wallpaper once, and exit
+  dry-run                Evaluate telemetry and preview routing without applying
+  list-tags              List all indexed wallpaper tags and asset counts
+  run                    Start continuous background wallpaper daemon
+
+Options:
+  -A, --agent            Compact machine/agent friendly output mode
+  --json                 Structured JSON output mode
+  -c, --config PATH      Path to borealis.toml configuration file
+  -d, --wallpaper-dir DIR Path to wallpapers directory
+  -b, --backend NAME     Override display backend (awww, swww, hyprpaper, command)
+  -v, --verbose          Enable verbose debug logging
+  --color MODE           Color output mode: auto, always, never
+  --no-color             Disable colored output
+  -h, --help             Show this help message and exit
+  -V, --version          Show version and exit
+""")
+        return
+
     print(f"""{ui.badge()} {ui.bold("Atmospheric & Astronomical Dynamic Wallpaper Engine")}
 
 {ui.blue("Usage:")}
@@ -224,6 +250,12 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(raw_args)
     if args.version:
+        if ui.is_json:
+            print(json.dumps({"app": "borealis", "version": __version__}))
+            return 0
+        if ui.is_agent:
+            print(f"borealis {__version__}")
+            return 0
         print(f"{ui.badge()} {ui.bold(f'v{__version__}')}")
         return 0
 
