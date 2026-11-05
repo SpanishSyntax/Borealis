@@ -23,3 +23,11 @@ def test_cli_status(capsys):
     assert ret == 0
     captured = capsys.readouterr()
     assert "BOREALIS TELEMETRY DASHBOARD" in captured.out
+
+
+def test_cli_agent_mode(capsys):
+    ret = main(["--agent", "--help"])
+    assert ret == 0
+    captured = capsys.readouterr()
+    assert "-A, --agent" in captured.out
+    assert "\033[" not in captured.out

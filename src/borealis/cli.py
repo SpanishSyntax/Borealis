@@ -9,7 +9,13 @@ from pathlib import Path
 from borealis import __app_name__, __version__
 from borealis.config import load_config
 from borealis.engine import BorealisEngine
-from borealis.ui import add_color_args, handle_color_args, ui
+from borealis.ui import (
+    add_agent_args,
+    add_color_args,
+    handle_agent_args,
+    handle_color_args,
+    ui,
+)
 
 
 def setup_logging(verbose: bool) -> None:
@@ -85,6 +91,7 @@ Options:
 
 def main(argv: list[str] | None = None) -> int:
     raw_args = list(argv) if argv is not None else sys.argv[1:]
+    handle_agent_args(raw_args)
     handle_color_args(raw_args)
 
     if any(a in ("-h", "--help", "help") for a in raw_args):
@@ -148,6 +155,14 @@ def main(argv: list[str] | None = None) -> int:
                     return 0
             elif action == "list-tags":
                 tags = engine.library.get_tag_counts()
+                if ui.is_agent or ui.is_json or ui.is_toon:
+                    ui.data(
+                        data=[{"tag": t, "count": c} for t, c in tags.items()],
+                        title="Borealis Wallpaper Tags",
+                        headers=["tag", "count"],
+                        rows=[[t, c] for t, c in tags.items()],
+                    )
+                    return 0
                 dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
                 lines = [
                     f"{ui.bold('Total Wallpapers:')}  {len(engine.library.items)} indexed",
@@ -213,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Enable verbose debug logging",
     )
     add_color_args(parser)
+    add_agent_args(parser)
     parser.add_argument(
         "-V",
         "--version",
@@ -225,22 +241,27 @@ def main(argv: list[str] | None = None) -> int:
         "run", help="Start continuous background wallpaper daemon"
     )
     add_color_args(p_run)
+    add_agent_args(p_run)
     p_once = subparsers.add_parser(
         "once", help="Evaluate telemetry, apply wallpaper once, and exit"
     )
     add_color_args(p_once)
+    add_agent_args(p_once)
     p_status = subparsers.add_parser(
         "status", help="Display current telemetry dashboard without changing wallpaper"
     )
     add_color_args(p_status)
+    add_agent_args(p_status)
     p_dry_run = subparsers.add_parser(
         "dry-run", help="Evaluate telemetry and pick wallpaper without applying it"
     )
     add_color_args(p_dry_run)
+    add_agent_args(p_dry_run)
     p_list_tags = subparsers.add_parser(
         "list-tags", help="List all indexed wallpaper tags and item counts"
     )
     add_color_args(p_list_tags)
+    add_agent_args(p_list_tags)
     p_mcp = subparsers.add_parser(
         "mcp", help="Run Model Context Protocol (MCP) stdio server"
     )
@@ -249,6 +270,7 @@ def main(argv: list[str] | None = None) -> int:
         "set", help="Immediately apply a wallpaper matching a tag, mood, or image file"
     )
     add_color_args(set_parser)
+    add_agent_args(set_parser)
     set_parser.add_argument(
         "tag",
         nargs="?",
@@ -326,6 +348,14 @@ def main(argv: list[str] | None = None) -> int:
 
     elif command == "list-tags":
         tags = engine.library.get_tag_counts()
+        if ui.is_agent or ui.is_json or ui.is_toon:
+            ui.data(
+                data=[{"tag": t, "count": c} for t, c in tags.items()],
+                title="Borealis Wallpaper Tags",
+                headers=["tag", "count"],
+                rows=[[t, c] for t, c in tags.items()],
+            )
+            return 0
         dirs_str = ", ".join(str(d) for d in config.wallpaper_dirs)
         lines = [
             f"{ui.bold('Total Wallpapers:')}  {len(engine.library.items)} indexed",
