@@ -1,6 +1,7 @@
 """Tests for Borealis configuration loader."""
 
 from pathlib import Path
+
 from borealis.config import load_config
 
 

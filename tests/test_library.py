@@ -1,6 +1,7 @@
 """Tests for Borealis wallpaper library indexing and tag matching."""
 
 from pathlib import Path
+
 from borealis.library import WallpaperItem, WallpaperLibrary
 
 

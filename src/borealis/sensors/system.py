@@ -3,6 +3,7 @@
 import datetime
 from pathlib import Path
 from typing import Any, Dict
+
 from borealis.sensors.base import BaseSensor
 
 

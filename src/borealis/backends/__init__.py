@@ -1,6 +1,7 @@
 """Backend registry and factory for Borealis wallpaper engines."""
 
 from typing import Any, Dict
+
 from borealis.backends.additional import CommandBackend, HyprpaperBackend, SwwwBackend
 from borealis.backends.awww import AwwwBackend
 from borealis.backends.base import BaseBackend

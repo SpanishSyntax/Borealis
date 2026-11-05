@@ -3,6 +3,7 @@
 import json
 import urllib.request
 from typing import Any, Dict
+
 from borealis.sensors.base import BaseSensor
 
 

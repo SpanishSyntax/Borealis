@@ -3,6 +3,7 @@
 import datetime
 import math
 from typing import Any, Dict
+
 from borealis.sensors.base import BaseSensor
 
 

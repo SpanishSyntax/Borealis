@@ -221,7 +221,9 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
-    p_run = subparsers.add_parser("run", help="Start continuous background wallpaper daemon")
+    p_run = subparsers.add_parser(
+        "run", help="Start continuous background wallpaper daemon"
+    )
     add_color_args(p_run)
     p_once = subparsers.add_parser(
         "once", help="Evaluate telemetry, apply wallpaper once, and exit"

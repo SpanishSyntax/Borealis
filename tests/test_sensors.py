@@ -1,8 +1,8 @@
 """Tests for Borealis telemetry sensors (solar, system, space)."""
 
 from borealis.sensors.solar import SolarSensor
-from borealis.sensors.system import SystemSensor
 from borealis.sensors.space import SpaceWeatherSensor
+from borealis.sensors.system import SystemSensor
 
 
 def test_solar_sensor():
