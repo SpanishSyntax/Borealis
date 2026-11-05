@@ -239,6 +239,9 @@ def main(argv: list[str] | None = None) -> int:
         "list-tags", help="List all indexed wallpaper tags and item counts"
     )
     add_color_args(p_list_tags)
+    p_mcp = subparsers.add_parser(
+        "mcp", help="Run Model Context Protocol (MCP) stdio server"
+    )
 
     set_parser = subparsers.add_parser(
         "set", help="Immediately apply a wallpaper matching a tag, mood, or image file"
@@ -351,6 +354,13 @@ def main(argv: list[str] | None = None) -> int:
             symbol="🌌",
         )
         engine.run_daemon()
+        return 0
+
+    elif command == "mcp":
+        from borealis.mcp import StdioMCPServer
+
+        server = StdioMCPServer()
+        server.run()
         return 0
 
     else:
