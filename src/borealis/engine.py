@@ -1,0 +1,253 @@
+"""Core Borealis engine coordinator: sensors, rules, library, and daemon loop."""
+
+import datetime
+import logging
+import random
+import signal
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+from borealis.backends import get_backend
+from borealis.config import Config
+from borealis.library import WallpaperLibrary
+from borealis.rules.evaluator import Rule, RuleEvaluator
+from borealis.sensors.location import LocationSensor
+from borealis.sensors.solar import SolarSensor
+from borealis.sensors.space import SpaceWeatherSensor
+from borealis.sensors.system import SystemSensor
+from borealis.sensors.weather import WeatherSensor
+from borealis.ui import ui
+
+logger = logging.getLogger("borealis")
+
+
+class BorealisEngine:
+    """Coordinates telemetry sensors, rule evaluation, wallpaper library, and daemon runtime."""
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
+        # 1. Sensors
+        self.location_sensor = LocationSensor(
+            manual_lat=config.manual_lat,
+            manual_lon=config.manual_lon,
+        )
+        self.solar_sensor = SolarSensor()
+        self.weather_sensor = WeatherSensor(ttl=config.telemetry_interval)
+        self.space_sensor = SpaceWeatherSensor(ttl=config.telemetry_interval)
+        self.system_sensor = SystemSensor()
+
+        self.sensors = [
+            self.location_sensor,
+            self.space_sensor,
+            self.weather_sensor,
+            self.solar_sensor,
+            self.system_sensor,
+        ]
+
+        # 2. Rule Evaluator
+        self.rule_evaluator = RuleEvaluator(rules=config.rules)
+
+        # 3. Library
+        self.library = WallpaperLibrary(
+            root_dirs=config.wallpaper_dirs,
+            history_size=config.history_size,
+        )
+
+        # 4. Display Backend
+        self.backend = get_backend(config.backend_name, config.backend_config)
+
+        self._telemetry_cache: Dict[str, Any] = {}
+        self._last_telemetry_time: float = 0.0
+        self._running = False
+
+    def update_telemetry(self, force: bool = False) -> Dict[str, Any]:
+        """Poll telemetry sensors and update unified context."""
+        now = time.time()
+        context = dict(self._telemetry_cache)
+
+        for sensor in self.sensors:
+            data = sensor.update(context, now, force=force)
+            context[sensor.name] = data
+
+        self._telemetry_cache = context
+        self._last_telemetry_time = now
+        return context
+
+    def evaluate_and_pick(
+        self, force_telemetry: bool = False
+    ) -> Tuple[str, List[str], Optional[Path], Optional[Rule], Dict[str, Any]]:
+        """Run telemetry evaluation, match rules, and select candidate wallpaper."""
+        context = self.update_telemetry(force=force_telemetry)
+        mood, tags, matched_rule = self.rule_evaluator.evaluate(context)
+        selected_path = self.library.select(mood=mood, tags=tags)
+        return mood, tags, selected_path, matched_rule, context
+
+    def tick(self, dry_run: bool = False) -> Dict[str, Any]:
+        """Execute one complete evaluation and wallpaper update cycle."""
+        mood, tags, path, rule, context = self.evaluate_and_pick()
+
+        result = {
+            "mood": mood,
+            "tags": tags,
+            "wallpaper": str(path) if path else None,
+            "rule": rule.name if rule else "default_matrix",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "applied": False,
+        }
+
+        if path and not dry_run:
+            success = self.backend.apply(path)
+            result["applied"] = success
+            if not success:
+                logger.warning(
+                    f"Backend '{self.backend.name}' failed to apply wallpaper: {path}"
+                )
+
+        return result
+
+    def set_wallpaper(self, target: str) -> Optional[Path]:
+        """Directly applies a wallpaper by image file path, indexed tag, or mood name."""
+        candidate_path = Path(target).expanduser().resolve()
+        if candidate_path.is_file():
+            success = self.backend.apply(candidate_path)
+            return candidate_path if success else None
+
+        # Search by tag or mood across indexed items
+        target_clean = target.lower()
+        matching = [item for item in self.library.items if item.matches({target_clean})]
+        if not matching:
+            return None
+
+        filtered = [item for item in matching if item.path not in self.library.history]
+        if not filtered:
+            filtered = matching
+
+        weights = [item.weight for item in filtered]
+        chosen = random.choices(filtered, weights=weights, k=1)[0]
+        self.library.history.append(chosen.path)
+        success = self.backend.apply(chosen.path)
+        return chosen.path if success else None
+
+    def print_status_dashboard(self) -> None:
+        """Print an informative, formatted telemetry dashboard to terminal."""
+        mood, tags, path, rule, ctx = self.evaluate_and_pick(force_telemetry=True)
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if ui.is_json:
+            import json
+
+            data = {
+                "status": "ok",
+                "timestamp": now,
+                "mood": mood,
+                "tags": tags,
+                "target_wallpaper": str(path) if path else None,
+                "rule": rule.name if rule else None,
+                "context": ctx,
+                "indexed_wallpapers": len(self.library.items),
+            }
+            print(json.dumps(data, indent=2))
+            return
+
+        loc = ctx.get("location", {})
+        sol = ctx.get("solar", {})
+        wth = ctx.get("weather", {})
+        spc = ctx.get("space", {})
+        sys_ctx = ctx.get("system", {})
+        rule_desc = (
+            f"Matched Rule '{rule.name}'" if rule else "Default 3D Matrix Routing"
+        )
+        dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
+        charging_str = "Charging" if sys_ctx.get("is_charging") else "Discharging"
+        batt_str = (
+            f" | Batt: {sys_ctx.get('battery_percent')}% ({charging_str})"
+            if sys_ctx.get("battery_percent") is not None
+            else ""
+        )
+
+        lines = [
+            f"{ui.bold('Geographic Origin:')}  {loc.get('city', 'Unknown')}, {loc.get('country', '')} (LAT: {loc.get('latitude')}, LON: {loc.get('longitude')})",
+            f"{ui.bold('Solar Elevation:')}    {sol.get('elevation_deg')}° ({ui.dim(str(sol.get('phase', 'unknown')))}) — {sol.get('estimated_lumens', 0)} lm",
+            f"{ui.bold('Thermal State:')}      {wth.get('temperature', 0)}°C ({ui.dim(str(wth.get('description', 'N/A')))}) | Hum: {wth.get('humidity', 0)}% (Rain: {wth.get('is_raining', False)})",
+            f"{ui.bold('Atmosphere / Space:')} Cloud: {wth.get('clouds', 0)}% | Kp-Index: {spc.get('kp_index', 0)} ({ui.dim(str(spc.get('activity', 'quiet')))})",
+            f"{ui.bold('Temporal State:')}     {sys_ctx.get('weekday', '').capitalize()} {sys_ctx.get('hour')}:{sys_ctx.get('minute'):02d} ({ui.dim(str(sys_ctx.get('season', '')))}){batt_str}",
+            f"{ui.bold('Active Mood Vector:')} {ui.magenta(str(mood))} (tags: {ui.dim(', '.join(tags))})",
+            f"{ui.bold('Decision Origin:')}    {ui.cyan(rule_desc)}",
+            f"{ui.bold('Wallpaper Library:')} {len(self.library.items)} assets indexed from {ui.dim(dirs_str)}",
+        ]
+        if path:
+            lines.append(f"{ui.bold('Target Wallpaper:')}   {ui.green(str(path))}")
+
+        ui.panel(f"BOREALIS TELEMETRY DASHBOARD | {now}", lines)
+
+    def run_daemon(self) -> None:
+        """Start the background daemon loop."""
+        self._running = True
+
+        def _handle_signal(signum, frame):
+            ui.info(
+                "Termination signal received. Shutting down Borealis daemon.",
+                symbol="🛑",
+            )
+            self._running = False
+
+        signal.signal(signal.SIGINT, _handle_signal)
+        signal.signal(signal.SIGTERM, _handle_signal)
+
+        dirs_str = ", ".join(str(d) for d in self.config.wallpaper_dirs)
+        ui.header("BOREALIS WALLPAPER DAEMON", width=76)
+        ui.action(
+            f"Starting Borealis wallpaper daemon using backend '{ui.bold(self.config.backend_name)}'...",
+            symbol="🌌",
+        )
+        ui.info(
+            f"Wallpaper repositories: {ui.cyan(dirs_str)} ({ui.bold(str(len(self.library.items)))} images)",
+            symbol="📁",
+        )
+        ui.info(
+            f"Interval: {ui.bold(str(self.config.interval) + 's')} | Telemetry refresh: {ui.bold(str(self.config.telemetry_interval) + 's')}",
+            symbol="⏱️ ",
+        )
+
+        # Initial tick
+        init_res = self.tick()
+        if init_res.get("applied") and init_res.get("wallpaper"):
+            ts = datetime.datetime.now().strftime("%H:%M:%S")
+            wp_name = Path(init_res["wallpaper"]).name
+            ui.success(
+                f"[{ts}] Active wallpaper set to {ui.bold(wp_name)} | Mood: {ui.cyan(init_res['mood'])}"
+            )
+
+        ticks_since_telemetry = 0
+        telemetry_tick_limit = max(
+            1, self.config.telemetry_interval // max(1, self.config.interval)
+        )
+
+        while self._running:
+            try:
+                time.sleep(self.config.interval)
+                if not self._running:
+                    break
+
+                ticks_since_telemetry += 1
+                if ticks_since_telemetry >= telemetry_tick_limit:
+                    ticks_since_telemetry = 0
+                    self.update_telemetry(force=True)
+
+                tick_res = self.tick()
+                if tick_res.get("applied") and tick_res.get("wallpaper"):
+                    ts = datetime.datetime.now().strftime("%H:%M:%S")
+                    wp_name = Path(tick_res["wallpaper"]).name
+                    ui.success(
+                        f"[{ts}] Transitioned to {ui.bold(wp_name)} | Mood: {ui.cyan(tick_res['mood'])}"
+                    )
+            except InterruptedError:
+                break
+            except Exception as e:
+                logger.error(f"Error in daemon tick: {e}", exc_info=True)
+                ui.error(f"Error in daemon tick: {e}")
+                time.sleep(5)
+
+        ui.info("Borealis daemon stopped.", symbol="💤")
