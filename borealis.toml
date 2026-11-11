@@ -1,0 +1,133 @@
+# ==============================================================================
+# BOREALIS - Atmospheric & Astronomical Dynamic Wallpaper Engine Configuration
+# ==============================================================================
+
+[general]
+# Display backend: "awww", "swww", "hyprpaper", or "command"
+backend = "awww"
+
+# Wallpaper switch interval in seconds (default: 20 seconds)
+interval = 20
+
+# Telemetry refresh interval in seconds (default: 900 seconds / 15 minutes)
+telemetry_interval = 900
+
+# Number of recently shown wallpapers to remember to prevent immediate repeats
+history_size = 10
+
+# Custom wallpaper directory (defaults to bundled wallpapers or ~/.local/share/wallpapers)
+# wallpaper_dir = "~/.local/share/wallpapers"
+
+[location]
+# Optional manual coordinates override (defaults to automatic IP geolocation)
+# latitude = 0.0
+# longitude = 0.0
+
+[backend]
+# Backend-specific options
+transition_type = "simple"
+transition_step = 90
+# command_template = "feh --bg-fill {path}" # only used when backend = "command"
+
+# ==============================================================================
+# DECLARATIVE RULES ENGINE
+# Rules are evaluated from highest priority to lowest priority.
+# The first rule whose "when" expression evaluates to true determines the mood.
+# Available context variables:
+#   - solar.elevation_deg, solar.sin_elevation, solar.estimated_lumens, solar.phase, solar.is_day
+#   - weather.clouds, weather.humidity, weather.temperature, weather.is_raining, weather.is_snowing
+#   - space.kp_index, space.is_storm, space.activity
+#   - system.hour, system.minute, system.weekday, system.season, system.battery_percent
+#   - random(), min(), max(), abs(), round()
+# ==============================================================================
+
+[[rules]]
+name = "geomagnetic_storm"
+priority = 100
+when = "space.kp_index >= 5 and random() > 0.2"
+mood = "wildcard_anomaly"
+description = "Triggered during space weather geomagnetic storms"
+
+[[rules]]
+name = "astronomical_night"
+priority = 90
+when = "solar.elevation_deg < -6 or solar.phase == 'astronomical_night'"
+mood = "cosmic_void"
+description = "Deep night sky after evening twilight"
+
+[[rules]]
+name = "crepuscular_twilight"
+priority = 80
+when = "solar.is_crepuscular or (0.0 <= solar.sin_elevation < 0.16)"
+mood = "crepuscular"
+description = "Golden hour and twilight around sunrise and sunset"
+
+[[rules]]
+name = "heavy_soup_freezing"
+priority = 70
+when = "weather.humidity > 75 and weather.temperature < 8"
+mood = "winter_gothic"
+description = "Freezing fog and heavy winter moisture"
+
+[[rules]]
+name = "heavy_soup_sweltering"
+priority = 69
+when = "weather.humidity > 75 and weather.temperature > 22"
+mood = "heavy_mist"
+description = "Heavy tropical moisture or summer downpours"
+
+[[rules]]
+name = "heavy_soup_mild"
+priority = 68
+when = "weather.humidity > 75 or weather.is_raining"
+mood = "pastoral_rain"
+description = "Rainy or wet temperate weather"
+
+[[rules]]
+name = "blinding_dry_freezing"
+priority = 65
+when = "solar.estimated_lumens > 600 and weather.humidity < 40 and weather.temperature < 8"
+mood = "glacial_stark"
+description = "Crisp, blinding sunlight on cold dry air"
+
+[[rules]]
+name = "blinding_dry_sweltering"
+priority = 64
+when = "solar.estimated_lumens > 600 and weather.humidity < 40 and weather.temperature > 22"
+mood = "crisp_sharp"
+description = "Arid, intense sunlight"
+
+[[rules]]
+name = "blinding_comfortable_sweltering"
+priority = 63
+when = "solar.estimated_lumens > 600 and weather.temperature > 20"
+mood = "pastoral_sun"
+description = "Brilliant, warm sunny afternoon"
+
+[[rules]]
+name = "arid_clarity"
+priority = 55
+when = "weather.humidity < 40"
+mood = "geometric_clarity"
+description = "Clear dry atmospheric conditions"
+
+[[rules]]
+name = "dim_freezing"
+priority = 50
+when = "solar.estimated_lumens < 250 and weather.temperature < 8"
+mood = "cozy_hearth"
+description = "Cold, dim overcast winter day"
+
+[[rules]]
+name = "dim_sweltering"
+priority = 49
+when = "solar.estimated_lumens < 250 and weather.temperature > 22"
+mood = "melancholic_tempest"
+description = "Oppressive dim skies or summer storms"
+
+[[rules]]
+name = "dim_general"
+priority = 40
+when = "solar.estimated_lumens < 250"
+mood = "nebula_diffuse"
+description = "Diffuse daytime cloud canopy"
