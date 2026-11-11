@@ -1,12 +1,15 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Aurora borealis green auroral ribbons dancing across arctic night sky" width="100%" />
+  <img src="assets/banner.png" alt="Borealis Banner" width="100%" />
 </p>
 
-# 🌌 Borealis
+# Borealis 🌌
 
-> **Atmospheric, Astronomical & Space-Weather Dynamic Wallpaper Engine for Linux & Wayland**
+> Atmospheric, Astronomical & Space-Weather Dynamic Wallpaper Engine for Linux & Wayland
 
-Borealis is a telemetry-driven dynamic wallpaper daemon that continuously synchronizes your desktop ambiance with celestial mechanics, real-time planetary weather, and geomagnetic solar storms.
+Borealis is a telemetry-driven dynamic wallpaper daemon that continuously synchronizes desktop ambiance with celestial mechanics, real-time planetary weather, and geomagnetic solar storms.
+
+> [!TIP]
+> **Complete Documentation:** Rule expression syntax, telemetry context tables, Home Manager options, and multi-directory indexing recipes are available on the **[Borealis Documentation Site](https://spanishsyntax.github.io/Borealis)**.
 
 ---
 
@@ -22,40 +25,40 @@ The polar night is never static; its sky pulses with the rhythmic ebb and flow o
 
 ---
 
-## ✨ Features
+## Features
 
-- 🔭 **Astronomical & Celestial Engine**:
+- **Astronomical & Celestial Engine**:
   - Calculates real-time solar declination, orbital zenith, and solar elevation angle using spherical orbital mechanics.
   - Automatically identifies twilight stages: *astronomical night*, *nautical twilight*, *civil twilight*, *golden hour (crepuscular)*, and *high day*.
   - Calculates ground-level solar lumens attenuated non-linearly by real-time cloud canopy density.
-- ☀️ **Space Weather & Geomagnetic Telemetry**:
+- **Space Weather & Geomagnetic Telemetry**:
   - Direct integration with NOAA Space Weather Prediction Center.
   - Detects solar winds and geomagnetic storms in real time via the planetary Kp-index ($\ge 5$).
-- 🌧️ **Terrestrial Weather Telemetry**:
+- **Terrestrial Weather Telemetry**:
   - Real-time cloud canopy, humidity, temperature, and precipitation parsing.
-- ⚡ **Host & Environmental Telemetry**:
+- **Host & Environmental Telemetry**:
   - Battery capacity and charging status detection.
   - Temporal rhythms, day-of-week, and seasonal transitions.
-- 🎛️ **Declarative Rule Engine (`borealis.toml`)**:
+- **Declarative Rule Engine (`borealis.toml`)**:
   - Configure decision-making using intuitive boolean expressions without writing code.
   - Customizable priorities, custom moods, and fallback chains.
-- 🏷️ **Smart Wallpaper Library (Beyond Simple Directories)**:
+- **Smart Wallpaper Library**:
   - **Filename Tags**: Name files `artwork[cosmic_void,night].jpg` to index multiple moods on one image.
   - **Directory Hierarchy**: Out-of-the-box support for nested mood directories (`wallpapers/cosmic_void/`).
   - **Manifest Support**: Optional `wallpapers.toml` for explicit weights and metadata.
   - **Anti-Repetition Memory**: Prevents consecutive image repeats across cycles.
-- 🔌 **Pluggable Backends**:
-  - [`awww`](https://codeberg.org/LGFae/awww) (default)
-  - [`swww`](https://github.com/LGFae/swww)
-  - [`hyprpaper`](https://github.com/hyprwm/hyprpaper)
+- **Pluggable Backends**:
+  - `awww` (default, high-performance Wayland daemon)
+  - `swww`
+  - `hyprpaper`
   - Custom shell command template (`feh`, `swaybg`, `mpvpaper`, etc.)
-- ❄️ **Nix-Native**:
+- **Nix-Native**:
   - 100% pure standard library Python core (<30ms startup, zero runtime pip dependencies).
-  - Built-in Home Manager systemd user service module.
+  - Built-in Home Manager and NixOS system service modules.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 Run Borealis directly using Nix:
 
@@ -81,36 +84,36 @@ nix run github:SpanishSyntax/Borealis -- run
 
 ---
 
-## 📊 Live Dashboard Preview
+## Live Dashboard Preview
 
 Running `borealis status` displays an instant diagnostic view of all atmospheric sensors:
 
 ```text
 ========================================================================
- BOREALIS TELEMETRY DASHBOARD | 2026-09-25 21:29:00
+ BOREALIS TELEMETRY DASHBOARD | 2026-11-11 02:30:00
 ========================================================================
-  Geographic Origin         : Foo, Bar (LAT: 00.00, LON: 00.00)
-  Solar Elevation           : -30.77° (astronomical_night)
-  Atmospheric Lumens        : 0.0 lm (sin_elev: -0.512)
+  Geographic Origin         : Oslo, Norway (LAT: 59.91, LON: 10.75)
+  Solar Elevation           : -32.14° (astronomical_night)
+  Atmospheric Lumens        : 0.0 lm (sin_elev: -0.532)
 ------------------------------------------------------------------------
-  Thermal State             : 14°C (Clear)
-  Moisture Content          : 66% (Rain: False)
-  Cloud Canopy              : 0%
-  Geomagnetic Scale         : Kp-Index 0.0 (quiet)
+  Thermal State             : -2°C (Clear)
+  Moisture Content          : 74% (Rain: False)
+  Cloud Canopy              : 12%
+  Geomagnetic Scale         : Kp-Index 2.3 (quiet)
 ------------------------------------------------------------------------
-  Local Temporal State      : Friday 21:29 (autumn)
-  Battery Telemetry         : 96% (Charging)
+  Local Temporal State      : Wednesday 02:30 (autumn)
+  Battery Telemetry         : 100% (AC Connected)
 ------------------------------------------------------------------------
   ACTIVE MOOD VECTOR        : cosmic_void (tags: cosmic_void, night)
   Decision Origin           : Matched Rule 'astronomical_night'
   Candidate Wallpaper       : Caspar_David_Friedrich_Abtei.jpg
-  Wallpaper Library         : 79 assets indexed from wallpapers/
+  Wallpaper Library         : 142 assets indexed from wallpapers/
 ========================================================================
 ```
 
 ---
 
-## 🛠️ Home Manager Configuration
+## Home Manager Configuration
 
 Add Borealis to your `flake.nix`:
 
@@ -122,8 +125,7 @@ Add Borealis to your `flake.nix`:
   };
 
   outputs = { self, nixpkgs, borealis, ... }: {
-    # In your Home Manager configuration:
-    homeManagerConfigurations.user = home-manager.lib.homeManagerConfiguration {
+    homeConfigurations.user = home-manager.lib.homeManagerConfiguration {
       modules = [
         borealis.homeManagerModules.default
         {
@@ -153,7 +155,7 @@ Borealis automatically provisions a `systemd.user.service` bound to `graphical-s
 
 ---
 
-## ⚙️ Declarative Rules (`borealis.toml`)
+## Declarative Rules (`borealis.toml`)
 
 Place your configuration at `~/.config/borealis/borealis.toml` or define via `services.borealis.settings`.
 
@@ -202,7 +204,7 @@ mood = "winter_gothic"
 
 ---
 
-## 🏷️ Organizing Wallpapers
+## Organizing Wallpapers
 
 Borealis supports three simultaneous discovery methods:
 
@@ -228,6 +230,6 @@ Borealis supports three simultaneous discovery methods:
 
 ---
 
-## 📜 License
+## License
 
 MIT © SpanishSyntax
