@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="assets/banner.png" alt="Borealis Banner" width="100%" />
-</p>
+<img src="assets/banner.png" alt="Borealis Banner" width="100%" />
 
 # Borealis 🌌
 
